@@ -56,8 +56,8 @@ def book_meeting(req: BookingRequest):
 
 @app.get("/debug-cal")
 def debug_cal(date: str):
-    start = f"{date}T00:00:00+05:30"
-    end = f"{date}T23:59:59+05:30"
+    start = f"{date}T03:30:00Z"
+    end = f"{date}T11:30:00Z"
     url = f"https://api.cal.com/v2/slots/available?eventTypeSlug={EVENT_SLUG}&username={USERNAME}&start={start}&end={end}"
     headers = {
         "Authorization": f"Bearer {CAL_API_KEY}",
