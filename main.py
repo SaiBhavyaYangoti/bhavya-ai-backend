@@ -53,3 +53,15 @@ def book_meeting(req: BookingRequest):
     res = requests.post(url, json=payload, headers=headers)
     data = res.json()
     return {"status": "booked", "booking": data}
+
+@app.get("/debug-cal")
+def debug_cal(date: str):
+    start = f"{date}T00:00:00+05:30"
+    end = f"{date}T23:59:59+05:30"
+    url = f"https://api.cal.com/v2/slots/available?eventTypeSlug={EVENT_SLUG}&username={USERNAME}&start={start}&end={end}"
+    headers = {
+        "Authorization": f"Bearer {CAL_API_KEY}",
+        "cal-api-version": "2024-09-04"
+    }
+    res = requests.get(url, headers=headers)
+    return res.json()
