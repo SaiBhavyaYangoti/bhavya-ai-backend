@@ -18,7 +18,7 @@ class BookingRequest(BaseModel):
 def check_availability(date: str):  # date: YYYY-MM-DD
     start = f"{date}T03:30:00Z"
     end = f"{date}T11:30:00Z"
-    url = f"https://api.cal.com/v2/slots/available?eventTypeSlug={EVENT_SLUG}&username={USERNAME}&start={start}&end={end}"
+    url = f"https://api.cal.com/v2/slots?eventTypeSlug={EVENT_SLUG}&username={USERNAME}&start={start}&end={end}"
     headers = {
         "Authorization": f"Bearer {CAL_API_KEY}",
         "cal-api-version": "2024-09-04"
@@ -58,7 +58,7 @@ def book_meeting(req: BookingRequest):
 def debug_cal(date: str):
     start = f"{date}T03:30:00Z"
     end = f"{date}T11:30:00Z"
-    url = f"https://api.cal.com/v2/slots/available?eventTypeSlug={EVENT_SLUG}&username={USERNAME}&start={start}&end={end}"
+    url = f"https://api.cal.com/v2/slots?eventTypeSlug={EVENT_SLUG}&username={USERNAME}&start={start}&end={end}"
     headers = {
         "Authorization": f"Bearer {CAL_API_KEY}",
         "cal-api-version": "2024-09-04"
