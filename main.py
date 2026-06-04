@@ -29,7 +29,7 @@ def check_availability(date: str):  # date: YYYY-MM-DD
     all_slots = []
     for day_slots in slots.values():
         for s in day_slots:
-            all_slots.append(s["time"])
+            all_slots.append(s["start"]) 
     return {"available_slots": all_slots[:5]}  # return top 5 slots
 
 @app.post("/book-meeting")
