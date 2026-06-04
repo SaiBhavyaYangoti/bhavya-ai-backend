@@ -25,11 +25,11 @@ def check_availability(date: str):  # date: YYYY-MM-DD
     }
     res = requests.get(url, headers=headers)
     data = res.json()
-    slots = data.get("data", {}).get("slots", {})
+    slots = data.get("data", {})  # remove the .get("slots", {})
     all_slots = []
     for day_slots in slots.values():
         for s in day_slots:
-            all_slots.append(s["start"]) 
+            all_slots.append(s["start"])
     return {"available_slots": all_slots[:5]}  # return top 5 slots
 
 @app.post("/book-meeting")
