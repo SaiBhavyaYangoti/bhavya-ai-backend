@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 import requests
-from datetime import datetime, timedelta
 
 app = FastAPI()
 
@@ -12,12 +11,15 @@ EVENT_SLUG = "30min"
 class BookingRequest(BaseModel):
     name: str
     email: str
-    start: str  # ISO format: 2026-06-10T10:00:00Z
+    start: str
 
-@app.get("/check-availability")
-def check_availability(date: str):  # date: YYYY-MM-DD
-    start = f"{date}T03:30:00Z"
-    end = f"{date}T11:30:00Z"
+class AvailabilityRequest(BaseModel):
+    date: str
+
+@app.post("/check-availability")
+def check_availability(req: AvailabilityRequest):
+    start = f"{req.date}T03:30:00Z"
+    end = f"{req.date}T11:30:00Z"
     url = f"https://api.cal.com/v2/slots?eventTypeSlug={EVENT_SLUG}&username={USERNAME}&start={start}&end={end}"
     headers = {
         "Authorization": f"Bearer {CAL_API_KEY}",
@@ -25,12 +27,12 @@ def check_availability(date: str):  # date: YYYY-MM-DD
     }
     res = requests.get(url, headers=headers)
     data = res.json()
-    slots = data.get("data", {})  # remove the .get("slots", {})
+    slots = data.get("data", {})
     all_slots = []
     for day_slots in slots.values():
         for s in day_slots:
             all_slots.append(s["start"])
-    return {"available_slots": all_slots[:5]}  # return top 5 slots
+    return {"available_slots": all_slots[:5]}
 
 @app.post("/book-meeting")
 def book_meeting(req: BookingRequest):
