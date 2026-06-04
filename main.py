@@ -16,8 +16,8 @@ class BookingRequest(BaseModel):
 
 @app.get("/check-availability")
 def check_availability(date: str):  # date: YYYY-MM-DD
-    start = f"{date}T00:00:00Z"
-    end = f"{date}T23:59:59Z"
+    start = f"{date}T00:00:00+05:30"
+    end = f"{date}T23:59:59+05:30"
     url = f"https://api.cal.com/v2/slots/available?eventTypeSlug={EVENT_SLUG}&username={USERNAME}&start={start}&end={end}"
     headers = {
         "Authorization": f"Bearer {CAL_API_KEY}",
