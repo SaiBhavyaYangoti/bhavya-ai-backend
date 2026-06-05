@@ -10,8 +10,8 @@ EVENT_SLUG = "30min"
 
 
 def get_slots(date: str):
-    start = f"{date}T03:30:00Z"
-    end = f"{date}T11:30:00Z"
+    start = f"{date}T00:00:00Z"
+    end = f"{date}T18:30:00Z"
     url = f"https://api.cal.com/v2/slots?eventTypeSlug={EVENT_SLUG}&username={USERNAME}&start={start}&end={end}"
     headers = {
         "Authorization": f"Bearer {CAL_API_KEY}",
