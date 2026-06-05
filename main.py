@@ -67,3 +67,7 @@ def debug_cal(date: str):
     }
     res = requests.get(url, headers=headers)
     return res.json()
+
+@app.get("/ping")
+def ping():
+    return {"status": "alive"}
