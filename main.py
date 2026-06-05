@@ -1,5 +1,6 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Query
 from pydantic import BaseModel
+from typing import Optional
 import requests
 
 app = FastAPI()
@@ -14,13 +15,16 @@ class BookingRequest(BaseModel):
     start: str
 
 class AvailabilityRequest(BaseModel):
-    date: str
+    date: Optional[str] = None
 
 @app.post("/check-availability")
-def check_availability(req: AvailabilityRequest):
-    print(f"Received date: {req.date}")  # add this
-    start = f"{req.date}T03:30:00Z"
-    end = f"{req.date}T11:30:00Z"
+def check_availability(req: AvailabilityRequest, date: str = Query(None)):
+    actual_date = req.date if req.date else date
+    if not actual_date:
+        return {"error": "date is required"}
+    print(f"Checking availability for: {actual_date}")
+    start = f"{actual_date}T03:30:00Z"
+    end = f"{actual_date}T11:30:00Z"
     url = f"https://api.cal.com/v2/slots?eventTypeSlug={EVENT_SLUG}&username={USERNAME}&start={start}&end={end}"
     headers = {
         "Authorization": f"Bearer {CAL_API_KEY}",
@@ -28,16 +32,16 @@ def check_availability(req: AvailabilityRequest):
     }
     res = requests.get(url, headers=headers)
     data = res.json()
-    print(f"Cal.com response: {data}")  # add this
+    print(f"Cal.com response: {data}")
     all_slots = []
-    day_data = data.get("data", {})
-    for day_slots in day_data.values():
+    for day_slots in data.get("data", {}).values():
         for s in day_slots:
             all_slots.append(s["start"])
     return {"available_slots": all_slots[:5]}
 
 @app.post("/book-meeting")
 def book_meeting(req: BookingRequest):
+    print(f"Booking for {req.name} ({req.email}) at {req.start}")
     url = "https://api.cal.com/v2/bookings"
     headers = {
         "Authorization": f"Bearer {CAL_API_KEY}",
@@ -56,10 +60,14 @@ def book_meeting(req: BookingRequest):
     }
     res = requests.post(url, json=payload, headers=headers)
     data = res.json()
+    print(f"Booking response: {data}")
     return {"status": "booked", "booking": data}
 
-@app.get("/debug-cal")
-def debug_cal(date: str):
+@app.get("/check-availability")
+def check_availability_get(date: str = Query(None)):
+    if not date:
+        return {"error": "date is required"}
+    print(f"GET - Checking availability for: {date}")
     start = f"{date}T03:30:00Z"
     end = f"{date}T11:30:00Z"
     url = f"https://api.cal.com/v2/slots?eventTypeSlug={EVENT_SLUG}&username={USERNAME}&start={start}&end={end}"
@@ -68,17 +76,21 @@ def debug_cal(date: str):
         "cal-api-version": "2024-09-04"
     }
     res = requests.get(url, headers=headers)
-    return res.json()
+    data = res.json()
+    all_slots = []
+    for day_slots in data.get("data", {}).values():
+        for s in day_slots:
+            all_slots.append(s["start"])
+    return {"available_slots": all_slots[:5]}
 
 @app.get("/ping")
 def ping():
     return {"status": "alive"}
 
 @app.get("/test-cal")
-def test_cal():
-    import requests
-    start = "2026-06-10T03:30:00Z"
-    end = "2026-06-10T11:30:00Z"
+def test_cal(date: str = Query("2026-06-10")):
+    start = f"{date}T03:30:00Z"
+    end = f"{date}T11:30:00Z"
     url = f"https://api.cal.com/v2/slots?eventTypeSlug={EVENT_SLUG}&username={USERNAME}&start={start}&end={end}"
     headers = {
         "Authorization": f"Bearer {CAL_API_KEY}",
