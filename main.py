@@ -18,6 +18,7 @@ class AvailabilityRequest(BaseModel):
 
 @app.post("/check-availability")
 def check_availability(req: AvailabilityRequest):
+    print(f"Received date: {req.date}")  # add this
     start = f"{req.date}T03:30:00Z"
     end = f"{req.date}T11:30:00Z"
     url = f"https://api.cal.com/v2/slots?eventTypeSlug={EVENT_SLUG}&username={USERNAME}&start={start}&end={end}"
@@ -27,6 +28,7 @@ def check_availability(req: AvailabilityRequest):
     }
     res = requests.get(url, headers=headers)
     data = res.json()
+    print(f"Cal.com response: {data}")  # add this
     all_slots = []
     day_data = data.get("data", {})
     for day_slots in day_data.values():
