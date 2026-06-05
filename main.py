@@ -71,3 +71,16 @@ def debug_cal(date: str):
 @app.get("/ping")
 def ping():
     return {"status": "alive"}
+
+@app.get("/test-cal")
+def test_cal():
+    import requests
+    start = "2026-06-10T03:30:00Z"
+    end = "2026-06-10T11:30:00Z"
+    url = f"https://api.cal.com/v2/slots?eventTypeSlug={EVENT_SLUG}&username={USERNAME}&start={start}&end={end}"
+    headers = {
+        "Authorization": f"Bearer {CAL_API_KEY}",
+        "cal-api-version": "2024-09-04"
+    }
+    res = requests.get(url, headers=headers)
+    return res.json()
