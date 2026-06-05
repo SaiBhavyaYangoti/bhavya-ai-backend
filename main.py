@@ -27,9 +27,9 @@ def check_availability(req: AvailabilityRequest):
     }
     res = requests.get(url, headers=headers)
     data = res.json()
-    slots = data.get("data", {})
     all_slots = []
-    for day_slots in slots.values():
+    day_data = data.get("data", {})
+    for day_slots in day_data.values():
         for s in day_slots:
             all_slots.append(s["start"])
     return {"available_slots": all_slots[:5]}
