@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Request, Query
 from pydantic import BaseModel
 from typing import Optional
 import requests
@@ -14,14 +14,24 @@ class BookingRequest(BaseModel):
     email: str
     start: str
 
-class AvailabilityRequest(BaseModel):
-    date: Optional[str] = None
-
 @app.post("/check-availability")
-def check_availability(req: AvailabilityRequest, date: str = Query(None)):
-    actual_date = req.date if req.date else date
+async def check_availability(request: Request, date: str = Query(None)):
+    try:
+        body = await request.json()
+        print(f"Raw body: {body}")
+        actual_date = date
+        if "date" in body:
+            actual_date = body["date"]
+        elif "message" in body:
+            args = body["message"]["toolCallList"][0]["function"]["arguments"]
+            actual_date = args.get("date")
+    except Exception as e:
+        print(f"Parse error: {e}")
+        actual_date = date
+
     if not actual_date:
-        return {"error": "date is required"}
+        return {"available_slots": [], "error": "date is required"}
+
     print(f"Checking availability for: {actual_date}")
     start = f"{actual_date}T03:30:00Z"
     end = f"{actual_date}T11:30:00Z"
@@ -40,8 +50,23 @@ def check_availability(req: AvailabilityRequest, date: str = Query(None)):
     return {"available_slots": all_slots[:5]}
 
 @app.post("/book-meeting")
-def book_meeting(req: BookingRequest):
-    print(f"Booking for {req.name} ({req.email}) at {req.start}")
+async def book_meeting(request: Request):
+    try:
+        body = await request.json()
+        print(f"Raw booking body: {body}")
+        name = body.get("name")
+        email = body.get("email")
+        start = body.get("start")
+        if "message" in body:
+            args = body["message"]["toolCallList"][0]["function"]["arguments"]
+            name = args.get("name")
+            email = args.get("email")
+            start = args.get("start")
+    except Exception as e:
+        print(f"Parse error: {e}")
+        return {"status": "error", "message": str(e)}
+
+    print(f"Booking for {name} ({email}) at {start}")
     url = "https://api.cal.com/v2/bookings"
     headers = {
         "Authorization": f"Bearer {CAL_API_KEY}",
@@ -51,10 +76,10 @@ def book_meeting(req: BookingRequest):
     payload = {
         "eventTypeSlug": EVENT_SLUG,
         "username": USERNAME,
-        "start": req.start,
+        "start": start,
         "attendee": {
-            "name": req.name,
-            "email": req.email,
+            "name": name,
+            "email": email,
             "timeZone": "Asia/Kolkata"
         }
     }
@@ -62,26 +87,6 @@ def book_meeting(req: BookingRequest):
     data = res.json()
     print(f"Booking response: {data}")
     return {"status": "booked", "booking": data}
-
-@app.get("/check-availability")
-def check_availability_get(date: str = Query(None)):
-    if not date:
-        return {"error": "date is required"}
-    print(f"GET - Checking availability for: {date}")
-    start = f"{date}T03:30:00Z"
-    end = f"{date}T11:30:00Z"
-    url = f"https://api.cal.com/v2/slots?eventTypeSlug={EVENT_SLUG}&username={USERNAME}&start={start}&end={end}"
-    headers = {
-        "Authorization": f"Bearer {CAL_API_KEY}",
-        "cal-api-version": "2024-09-04"
-    }
-    res = requests.get(url, headers=headers)
-    data = res.json()
-    all_slots = []
-    for day_slots in data.get("data", {}).values():
-        for s in day_slots:
-            all_slots.append(s["start"])
-    return {"available_slots": all_slots[:5]}
 
 @app.get("/ping")
 def ping():
